@@ -9,4 +9,4 @@ This repo has PyTorch implementations of training a ConvNet.
  - [CLR](https://arxiv.org/pdf/1506.01186.pdf) (Cyclic Learning Rate - Accelerates training (uses cosine annealing instead of linear))
  - Training a simple 28x28 network from scratch
  - Basic Dataloaders
- - Segmentation Dataset Loader (WIP)
+ - Segmentation Dataloaders (WIP)
