@@ -127,33 +127,38 @@ class Trainer():
 
 		return self.model
 
-	def train_last_layer_clr(self, lr_max, lr_min, epoch_num, div):
+	def train_last_layer_clr(self, lr_max, lr_min, epoch_num, cycle_num, div):
 		children_num = len(list(self.model.children()))
 		freeze_until(self.model, children_num - 2)
 
 		optimizer = get_optimizer(self.model, [lr_min], None)
-		scheduler = CyclicLR(optimizer, [lr_max], div, total = self.train_iteration_per_epoch * epoch_num)
 
-		for epoch in range(epoch_num):
-			running_loss = 0.0
-			running_corrects = 0
+		cur_epoch = 0
+		for cycle in range(cycle_num):
 
-			for batch in tqdm(self.train_dl):
-				cur_lr = get_lr(optimizer)
-				self.lr_list.append(cur_lr)
+			scheduler = CyclicLR(optimizer, [lr_max], div, total = self.train_iteration_per_epoch * epoch_num)
 
-				cur_loss, cur_corrects = self.train(batch, optimizer, scheduler)
-				running_loss += cur_loss
-				running_corrects += cur_corrects
+			for epoch in range(epoch_num):
+				cur_epoch += 1
+				running_loss = 0.0
+				running_corrects = 0
 
-			epoch_loss_train = running_loss / self.train_dset_size
-			epoch_acc_train = -1
-			if(self.no_acc == False):
-				epoch_acc_train = running_corrects / self.train_dset_size * 100.0
-			epoch_loss_val, epoch_acc_val = self.evaluate(self.val_dl, self.val_dset_size)
+				for batch in tqdm(self.train_dl):
+					cur_lr = get_lr(optimizer)
+					self.lr_list.append(cur_lr)
 
-			print('Epoch : {}, Train Loss : {:.6f}, Train Acc : {:.6f}, Val Loss : {:.6f}, Val Acc : {:.6f}'.format(
-					epoch, epoch_loss_train, epoch_acc_train, epoch_loss_val, epoch_acc_val))
+					cur_loss, cur_corrects = self.train(batch, optimizer, scheduler)
+					running_loss += cur_loss
+					running_corrects += cur_corrects
+
+				epoch_loss_train = running_loss / self.train_dset_size
+				epoch_acc_train = -1
+				if(self.no_acc == False):
+					epoch_acc_train = running_corrects / self.train_dset_size * 100.0
+				epoch_loss_val, epoch_acc_val = self.evaluate(self.val_dl, self.val_dset_size)
+
+				print('Epoch : {}, Train Loss : {:.6f}, Train Acc : {:.6f}, Val Loss : {:.6f}, Val Acc : {:.6f}'.format(
+						cur_epoch, epoch_loss_train, epoch_acc_train, epoch_loss_val, epoch_acc_val))
 
 		return self.model
 
@@ -203,33 +208,38 @@ class Trainer():
 		return self.model
 
 	# self, lr_max, lr_min, epoch_num, div
-	def train_all_layers_clr(self, lrs_max, lrs_min, epoch_num, div, param_places=[1,2,3]):
+	def train_all_layers_clr(self, lrs_max, lrs_min, epoch_num, cycle_num, div, param_places=[1,2,3]):
 		freeze_until(self.model, -1)
 
 		optimizer = get_optimizer(self.model, lrs_min, param_places)
-		scheduler = CyclicLR(optimizer, lrs_max, div, total = self.train_iteration_per_epoch * epoch_num)
+		
+		cur_epoch = 0
+		for cycle in range(cycle_num):
 
-		for epoch in range(epoch_num):
-			running_loss = 0.0
-			running_corrects = 0
+			scheduler = CyclicLR(optimizer, lrs_max, div, total = self.train_iteration_per_epoch * epoch_num)
 
-			for batch in tqdm(self.train_dl):
-				cur_lr = get_lr(optimizer)
-				self.lr_list.append(cur_lr)
+			for epoch in range(epoch_num):
+				cur_epoch += 1
+				running_loss = 0.0
+				running_corrects = 0
 
-				cur_loss, cur_corrects = self.train(batch, optimizer, scheduler)
-				running_loss += cur_loss
-				running_corrects += cur_corrects
+				for batch in tqdm(self.train_dl):
+					cur_lr = get_lr(optimizer)
+					self.lr_list.append(cur_lr)
 
-			epoch_loss_train = running_loss / self.train_dset_size
-			epoch_acc_train = -1
-			if(self.no_acc == False):
-				epoch_acc_train = running_corrects / self.train_dset_size * 100.0
+					cur_loss, cur_corrects = self.train(batch, optimizer, scheduler)
+					running_loss += cur_loss
+					running_corrects += cur_corrects
 
-			epoch_loss_val, epoch_acc_val = self.evaluate(self.val_dl, self.val_dset_size)
+				epoch_loss_train = running_loss / self.train_dset_size
+				epoch_acc_train = -1
+				if(self.no_acc == False):
+					epoch_acc_train = running_corrects / self.train_dset_size * 100.0
 
-			print('Epoch : {}, Train Loss : {:.6f}, Train Acc : {:.6f}, Val Loss : {:.6f}, Val Acc : {:.6f}'.format(
-					epoch, epoch_loss_train, epoch_acc_train, epoch_loss_val, epoch_acc_val))
+				epoch_loss_val, epoch_acc_val = self.evaluate(self.val_dl, self.val_dset_size)
+
+				print('Epoch : {}, Train Loss : {:.6f}, Train Acc : {:.6f}, Val Loss : {:.6f}, Val Acc : {:.6f}'.format(
+						cur_epoch, epoch_loss_train, epoch_acc_train, epoch_loss_val, epoch_acc_val))
 
 		return self.model
 
@@ -278,32 +288,37 @@ class Trainer():
 
 		return self.model
 
-	def train_all_layers_scratch_clr(self, lr_max, lr_min, epoch_num, div):
+	def train_all_layers_scratch_clr(self, lr_max, lr_min, epoch_num, cycle_num, div):
 		freeze_until(self.model, -1)
 
 		optimizer = get_optimizer(self.model, [lr_min], None)
-		scheduler = CyclicLR(optimizer, [lr_max], div, total = self.train_iteration_per_epoch * epoch_num)
 
-		for epoch in range(epoch_num):
-			running_loss = 0.0
-			running_corrects = 0
+		cur_epoch = 0
+		for cycle in range(cycle_num):
 
-			for batch in tqdm(self.train_dl):
-				cur_lr = get_lr(optimizer)
-				self.lr_list.append(cur_lr)
+			scheduler = CyclicLR(optimizer, [lr_max], div, total = self.train_iteration_per_epoch * epoch_num)
 
-				cur_loss, cur_corrects = self.train(batch, optimizer, scheduler)
-				running_loss += cur_loss
-				running_corrects += cur_corrects
+			for epoch in range(epoch_num):
+				cur_epoch += 1
+				running_loss = 0.0
+				running_corrects = 0
 
-			epoch_loss_train = running_loss / self.train_dset_size
-			epoch_acc_train = -1
-			if(self.no_acc == False):
-				epoch_acc_train = running_corrects / self.train_dset_size * 100.0
-			epoch_loss_val, epoch_acc_val = self.evaluate(self.val_dl, self.val_dset_size)
+				for batch in tqdm(self.train_dl):
+					cur_lr = get_lr(optimizer)
+					self.lr_list.append(cur_lr)
 
-			print('Epoch : {}, Train Loss : {:.6f}, Train Acc : {:.6f}, Val Loss : {:.6f}, Val Acc : {:.6f}'.format(
-					epoch, epoch_loss_train, epoch_acc_train, epoch_loss_val, epoch_acc_val))
+					cur_loss, cur_corrects = self.train(batch, optimizer, scheduler)
+					running_loss += cur_loss
+					running_corrects += cur_corrects
+
+				epoch_loss_train = running_loss / self.train_dset_size
+				epoch_acc_train = -1
+				if(self.no_acc == False):
+					epoch_acc_train = running_corrects / self.train_dset_size * 100.0
+				epoch_loss_val, epoch_acc_val = self.evaluate(self.val_dl, self.val_dset_size)
+
+				print('Epoch : {}, Train Loss : {:.6f}, Train Acc : {:.6f}, Val Loss : {:.6f}, Val Acc : {:.6f}'.format(
+						cur_epoch, epoch_loss_train, epoch_acc_train, epoch_loss_val, epoch_acc_val))
 
 		return self.model
 

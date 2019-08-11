@@ -134,7 +134,7 @@ class Dataset():
 			if(get_size):
 				returns = returns + (sizes,)
 
-		elif(self.basic_types == 'Segmentation'):
+		#elif(self.basic_types == 'Segmentation'):
 
 
 		return returns
@@ -170,6 +170,7 @@ class Segmentation_Dataset():
 			sample = (input_img, target_img)
 			return sample
 
+'''
 RGB_list = [
 	{'Animal', (64, 128, 64)},
 	{'Archway', (192, 0, 128)},
@@ -204,3 +205,4 @@ RGB_list = [
 	{'Void', (0, 0, 0)},
 	{'Wall', (64, 192, 0)}
 ]
+'''
