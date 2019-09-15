@@ -341,7 +341,7 @@ class Trainer():
 		scheduler = StepLR(optimizer, step_size = 1, gamma = t)
 
 		records = []
-		for images, labels in self.train_dl:
+		for images, labels in tqdm(self.train_dl):
 			self.model.train()
 			scheduler.step()
 			images = images.to(self.device)
