@@ -330,48 +330,35 @@ class Trainer():
 		self.train_dset_size = sizes['train_dset_size']
 		self.val_dset_size = sizes['val_dset_size']
 
-	def lr_find(self, lr_start = 1e-6, lr_multiplier = 1.1, max_loss = 3.0, print_value = True):
+	def lr_find(self, lr_start = 1e-6, lr_end = 10):
 		init_model_states = copy.deepcopy(self.model.state_dict())
 
 		children_num = len(list(self.model.children()))
 		freeze_until(self.model, children_num - 2)
 
+		t = (lr_end / lr_start) ** (1.0 / (len(self.train_dl) - 1))
 		optimizer = get_optimizer(self.model, [lr_start], None)
-		scheduler = StepLR(optimizer, step_size = 1, gamma = lr_multiplier)
+		scheduler = StepLR(optimizer, step_size = 1, gamma = t)
 
 		records = []
-		lr_found = 0
+		for images, labels in self.train_dl:
+			self.model.train()
+			scheduler.step()
+			images = images.to(self.device)
+			labels = labels.to(self.device)
+			optimizer.zero_grad()
 
-		while(1):
-			for images, labels in self.train_dl:
-				# train a single iteration
-				self.model.train()
-				scheduler.step()
-				images = images.to(self.device)
-				labels = labels.to(self.device)
-				optimizer.zero_grad()
+			with torch.set_grad_enabled(True):
+				outputs = self.model(images)
+				_, preds = torch.max(outputs, 1)
+				loss = self.criterion(outputs, labels)
 
-				with torch.set_grad_enabled(True):
-					outputs = self.model(images)
-					_, preds = torch.max(outputs, 1)
-					loss = self.criterion(outputs, labels)
+				loss.backward()
+				optimizer.step()
 
-					loss.backward()
-					optimizer.step()
-
-				cur_lr = optimizer.param_groups[0]['lr']
-				cur_loss = loss.item()
-				records.append((cur_lr, cur_loss))
-
-				if(print_value == True):
-					print('Learning rate : {} / Loss : {}'.format(cur_lr, cur_loss))
-
-				if(cur_loss > max_loss):
-					lr_found = 1
-					break
-
-			if(lr_found == 1):
-				break
+			cur_lr = optimizer.param_groups[0]['lr']
+			cur_loss = loss.item()
+			records.append((cur_lr, cur_loss))
 	    
 		self.model.load_state_dict(init_model_states)
 		return records
